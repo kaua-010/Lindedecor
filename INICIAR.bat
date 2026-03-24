@@ -7,8 +7,12 @@ where node >nul 2>nul
 if %errorlevel% neq 0 (
     echo [ERRO] Node.js nao encontrado!
     echo.
-    echo Baixe e instale o Node.js em: https://nodejs.org
-    echo Depois feche e reabra este arquivo.
+    echo Execute INSTALAR-NODE.bat para abrir o download.
+    echo Ou acesse: https://nodejs.org
+    echo.
+    echo Apos instalar, FECHE o Cursor e abra de novo.
+    echo.
+    start "" "%~dp0INSTALAR-NODE.bat"
     pause
     exit /b 1
 )

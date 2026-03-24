@@ -1,0 +1,36 @@
+========================================
+  LINEDECOR - COMO FAZER FUNCIONAR
+========================================
+
+O Node.js NAO ESTA INSTALADO no seu PC.
+Sem ele, o sistema nao roda.
+
+PASSO 1 - INSTALAR NODE.JS
+--------------------------
+Opcao A (Recomendado):
+  1. Dê duplo clique em: INSTALAR-NODE.bat
+  2. Uma pagina vai abrir - clique no botao verde "LTS"
+  3. Baixe e execute o instalador
+  4. Avance com Next em tudo
+  5. Conclua a instalacao
+
+Opcao B (Pelo terminal como Admin):
+  1. Abra PowerShell como Administrador
+     (clique direito no menu Iniciar -> Windows PowerShell (Admin))
+  2. Digite: winget install OpenJS.NodeJS.LTS
+  3. Aguarde terminar
+
+PASSO 2 - REINICIAR
+-------------------
+FECHE o Cursor completamente e abra de novo.
+(O Windows precisa atualizar o PATH)
+
+PASSO 3 - INICIAR O SISTEMA
+---------------------------
+Dê duplo clique em: INICIAR.bat
+
+PASSO 4 - ACESSAR
+-----------------
+No navegador, abra: http://localhost:3000/index.html
+
+========================================
