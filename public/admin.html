@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin — LineDecor</title>
+<link rel="stylesheet" href="style.css">
+<style>
+body { background: #111; }
+.admin-layout { display: grid; grid-template-columns: 240px 1fr; min-height: 100vh; }
+
+/* ── Sidebar ── */
+.sidebar { background: var(--dark); border-right: 1px solid rgba(201,168,76,.12); position: sticky; top: 0; height: 100vh; overflow-y: auto; display: flex; flex-direction: column; }
+.sb-logo { padding: 28px 24px 20px; border-bottom: 1px solid rgba(255,255,255,.06); }
+.sb-logo-text { font-family: var(--ff-head); font-size: 1.3rem; font-weight: 700; color: var(--cream); letter-spacing: 2px; text-transform: uppercase; }
+.sb-logo-text span { color: var(--gold); }
+.sb-tag { font-family: var(--ff-mono); font-size: 8px; letter-spacing: 2.5px; color: var(--warm); text-transform: uppercase; margin-top: 4px; }
+.sb-nav { padding: 16px 0; flex: 1; }
+.sb-group-label { font-family: var(--ff-mono); font-size: 8px; letter-spacing: 2.5px; text-transform: uppercase; color: rgba(255,255,255,.2); padding: 8px 24px 6px; }
+.sb-link { display: flex; align-items: center; gap: 10px; padding: 9px 24px; color: rgba(255,255,255,.45); font-size: 12px; font-weight: 500; border-left: 2px solid transparent; transition: all .18s; cursor: pointer; }
+.sb-link:hover { color: white; background: rgba(255,255,255,.04); }
+.sb-link.active { color: var(--gold2); border-left-color: var(--gold); background: rgba(201,168,76,.08); }
+.sb-link-icon { font-size: 15px; width: 18px; text-align: center; }
+.sb-bottom { padding: 16px 20px 24px; border-top: 1px solid rgba(255,255,255,.06); }
+
+/* ── Main area ── */
+.admin-main { background: var(--cream); min-height: 100vh; }
+.admin-topbar { background: var(--white); border-bottom: 1px solid var(--sand); padding: 16px 36px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
+.topbar-title { font-family: var(--ff-head); font-size: 1.5rem; font-weight: 700; color: var(--dark); }
+.topbar-title span { font-size: .85rem; font-family: var(--ff-mono); font-weight: 400; color: var(--warm); margin-left: 10px; letter-spacing: 1px; }
+.admin-content { padding: 32px 36px; }
+
+/* ── Tab Panels ── */
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+
+/* ── Dashboard Stats ── */
+.stats-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 16px; margin-bottom: 28px; }
+.stat-card { background: var(--white); border: 1px solid var(--sand); padding: 24px 20px; position: relative; overflow: hidden; }
+.stat-card::before { content: ''; position: absolute; top: 0; left: 0; width: 3px; height: 100%; }
+.stat-card.gold::before { background: var(--gold); }
+.stat-card.dark::before { background: var(--dark); }
+.stat-card.rust::before { background: var(--rust); }
+.stat-card.green::before { background: var(--green); }
+.stat-card-label { font-family: var(--ff-mono); font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: var(--warm); margin-bottom: 10px; }
+.stat-card-val { font-family: var(--ff-head); font-size: 2.2rem; font-weight: 700; color: var(--dark); line-height: 1; }
+.stat-card-sub { font-family: var(--ff-mono); font-size: 9px; color: var(--stone); margin-top: 6px; }
+.stat-card-icon { position: absolute; right: 16px; top: 50%; transform: translateY(-50%); font-size: 2rem; opacity: .15; }
+
+/* ── Tables ── */
+.table-wrap { background: var(--white); border: 1px solid var(--sand); overflow-x: auto; }
+.table-header { padding: 18px 24px; border-bottom: 1px solid var(--sand); display: flex; align-items: center; justify-content: space-between; }
+.table-title { font-family: var(--ff-head); font-size: 1.1rem; font-weight: 700; color: var(--dark); }
+table { width: 100%; border-collapse: collapse; }
+thead th { background: var(--cream); font-family: var(--ff-mono); font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: var(--warm); padding: 12px 16px; text-align: left; border-bottom: 1px solid var(--sand); font-weight: 500; white-space: nowrap; }
+tbody td { padding: 14px 16px; border-bottom: 1px solid var(--sand); font-size: 13px; color: var(--ink); vertical-align: middle; }
+tbody tr:hover td { background: rgba(245,240,232,.5); }
+tbody tr:last-child td { border-bottom: none; }
+.td-emoji { font-size: 1.8rem; }
+.td-actions { display: flex; gap: 6px; }
+.status-badge { display: inline-flex; align-items: center; padding: 3px 10px; font-family: var(--ff-mono); font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase; border-radius: 2px; }
+.s-pendente  { background: #fff3cd; color: #856404; }
+.s-enviado   { background: #d1ecf1; color: #0c5460; }
+.s-entregue  { background: #d4edda; color: #155724; }
+.s-cancelado { background: #f8d7da; color: #721c24; }
+
+/* ── Formulário de produto ── */
+.prod-form { background: var(--white); border: 1px solid var(--sand); padding: 28px; margin-bottom: 28px; }
+.prod-form-title { font-family: var(--ff-head); font-size: 1.2rem; font-weight: 700; color: var(--dark); margin-bottom: 22px; padding-bottom: 14px; border-bottom: 1px solid var(--sand); display: flex; align-items: center; justify-content: space-between; }
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.form-grid-3 { grid-template-columns: 1fr 1fr 1fr; }
+
+/* ── Dashboard grid ── */
+.dash-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+
+/* ── Responsive ── */
+@media (max-width:900px) {
+  .admin-layout { grid-template-columns: 1fr; }
+  .sidebar { display: none; }
+  .stats-grid { grid-template-columns: 1fr 1fr; }
+  .dash-grid { grid-template-columns: 1fr; }
+  .form-grid { grid-template-columns: 1fr; }
+  .admin-content { padding: 20px; }
+}
+@media (max-width:600px) {
+  .stats-grid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+<div id="toast"></div>
+
+<div class="admin-layout">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sb-logo">
+      <div class="sb-logo-text">Line<span>Decor</span></div>
+      <div class="sb-tag">Painel Administrativo</div>
+    </div>
+    <nav class="sb-nav">
+      <div class="sb-group-label">Geral</div>
+      <div class="sb-link active" onclick="switchTab('dashboard', this)"><span class="sb-link-icon">📊</span> Dashboard</div>
+      <div class="sb-group-label">Loja</div>
+      <div class="sb-link" onclick="switchTab('produtos', this)"><span class="sb-link-icon">🏺</span> Produtos</div>
+      <div class="sb-link" onclick="switchTab('pedidos', this)"><span class="sb-link-icon">📦</span> Pedidos</div>
+      <div class="sb-group-label">Comunicação</div>
+      <div class="sb-link" onclick="switchTab('mensagens', this)"><span class="sb-link-icon">✉️</span> Mensagens</div>
+      <div class="sb-group-label">Sistema</div>
+      <div class="sb-link" onclick="switchTab('config', this)"><span class="sb-link-icon">⚙️</span> Configurações</div>
+      <div class="sb-group-label">Links</div>
+      <div class="sb-link" onclick="window.open('index.html','_blank')"><span class="sb-link-icon">🌐</span> Ver Loja</div>
+    </nav>
+    <div class="sb-bottom">
+      <div style="font-family:var(--ff-mono);font-size:9px;color:rgba(255,255,255,.2);text-align:center;line-height:1.8">
+        LineDecor Admin v1.0<br>Node.js + SQLite
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="admin-main">
+    <div class="admin-topbar">
+      <div class="topbar-title" id="topbar-title">Dashboard <span>Visão geral</span></div>
+      <a href="index.html" class="btn btn-ghost btn-sm" target="_blank">↗ Ver Loja</a>
+    </div>
+    <div class="admin-content">
+
+      <!-- ══ DASHBOARD ══ -->
+      <div class="tab-panel active" id="panel-dashboard">
+        <div class="stats-grid" id="dash-stats">
+          <div style="grid-column:1/-1;display:flex;justify-content:center;padding:40px"><div class="spinner"></div></div>
+        </div>
+        <div class="dash-grid">
+          <div class="table-wrap">
+            <div class="table-header"><div class="table-title">Pedidos Recentes</div></div>
+            <table><thead><tr><th>#</th><th>Cliente</th><th>Total</th><th>Status</th></tr></thead>
+            <tbody id="dash-pedidos"><tr><td colspan="4" style="text-align:center;padding:30px;color:var(--stone)">Carregando...</td></tr></tbody></table>
+          </div>
+          <div class="table-wrap">
+            <div class="table-header"><div class="table-title">Mais Vendidos</div></div>
+            <table><thead><tr><th>Produto</th><th>Vendas</th></tr></thead>
+            <tbody id="dash-top"><tr><td colspan="2" style="text-align:center;padding:30px;color:var(--stone)">Carregando...</td></tr></tbody></table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══ PRODUTOS ══ -->
+      <div class="tab-panel" id="panel-produtos">
+        <!-- Form -->
+        <div class="prod-form">
+          <div class="prod-form-title">
+            <span id="form-title">Novo Produto</span>
+            <button class="btn btn-ghost btn-sm" id="btn-cancel-edit" onclick="cancelEdit()" style="display:none">✕ Cancelar edição</button>
+          </div>
+          <input type="hidden" id="edit-id">
+          <div class="form-grid">
+            <div class="form-group"><label class="form-label">Nome *</label><input class="form-input" id="p-nome" placeholder="Ex: Vaso Cerâmica Atena"></div>
+            <div class="form-group"><label class="form-label">Categoria *</label>
+              <select class="form-select" id="p-categoria">
+                <option>Vasos</option><option>Velas</option><option>Quadros</option>
+                <option>Plantas</option><option>Iluminação</option><option>Premium</option>
+                <option>Orgânicos</option><option>Mobiliário</option>
+              </select>
+            </div>
+            <div class="form-group"><label class="form-label">Preço (R$) *</label><input class="form-input" id="p-preco" type="number" step="0.01" placeholder="0.00"></div>
+            <div class="form-group"><label class="form-label">Preço Original (opcional)</label><input class="form-input" id="p-preco-orig" type="number" step="0.01" placeholder="0.00"></div>
+            <div class="form-group"><label class="form-label">Estoque</label><input class="form-input" id="p-estoque" type="number" placeholder="10" value="10"></div>
+            <div class="form-group"><label class="form-label">Emoji</label><input class="form-input" id="p-emoji" placeholder="🏺" maxlength="4"></div>
+          </div>
+          <div class="form-group"><label class="form-label">Descrição</label><textarea class="form-textarea" id="p-descricao" placeholder="Breve descrição do produto..."></textarea></div>
+          <div class="form-group"><label class="form-label">Badge</label>
+            <select class="form-select" id="p-badge" style="max-width:200px">
+              <option value="">Nenhum</option><option value="Novo">Novo</option><option value="Oferta">Oferta</option>
+            </select>
+          </div>
+          <button class="btn btn-gold" onclick="salvarProduto()">✓ Salvar Produto</button>
+        </div>
+        <!-- Table -->
+        <div class="table-wrap">
+          <div class="table-header">
+            <div class="table-title">Todos os Produtos</div>
+            <span id="prod-count" style="font-family:var(--ff-mono);font-size:11px;color:var(--warm)"></span>
+          </div>
+          <table>
+            <thead><tr><th>Emoji</th><th>Nome</th><th>Categoria</th><th>Preço</th><th>Estoque</th><th>Vendas</th><th>Badge</th><th>Ações</th></tr></thead>
+            <tbody id="prod-table-body"><tr><td colspan="8" style="text-align:center;padding:40px"><div class="spinner" style="margin:auto"></div></td></tr></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ══ PEDIDOS ══ -->
+      <div class="tab-panel" id="panel-pedidos">
+        <div class="table-wrap">
+          <div class="table-header">
+            <div class="table-title">Todos os Pedidos</div>
+            <span id="ped-count" style="font-family:var(--ff-mono);font-size:11px;color:var(--warm)"></span>
+          </div>
+          <div style="overflow-x:auto">
+          <table>
+            <thead><tr><th>#</th><th>Cliente</th><th>Tel</th><th>Itens</th><th>Total</th><th>Status</th><th>Rastreio</th><th>Data</th><th>Ação</th></tr></thead>
+            <tbody id="ped-table-body"><tr><td colspan="9" style="text-align:center;padding:40px"><div class="spinner" style="margin:auto"></div></td></tr></tbody>
+          </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══ MENSAGENS ══ -->
+      <div class="tab-panel" id="panel-mensagens">
+        <div class="table-wrap">
+          <div class="table-header">
+            <div class="table-title">Mensagens e Contatos</div>
+            <select class="form-select" style="width:auto;padding:6px 12px" onchange="loadMensagens(this.value)">
+              <option value="">Todas</option>
+              <option value="contato">Contato</option>
+              <option value="feedback">Feedback</option>
+            </select>
+          </div>
+          <table>
+            <thead><tr><th>Data</th><th>Nome</th><th>Email</th><th>Tipo</th><th>Assunto/Mensagem</th><th>Lida</th></tr></thead>
+            <tbody id="msg-table-body"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ══ CONFIG ══ -->
+      <div class="tab-panel" id="panel-config">
+        <div class="prod-form">
+          <div class="prod-form-title">Configurações da Empresa</div>
+          <p style="font-size:13px;color:var(--warm);margin-bottom:20px">Estes dados aparecem no site e recebem notificações de pedidos.</p>
+          <div class="form-grid">
+            <div class="form-group"><label class="form-label">E-mail da Empresa</label><input class="form-input" id="cfg-email" placeholder="contato@linedecor.com.br"></div>
+            <div class="form-group"><label class="form-label">Telefone / WhatsApp</label><input class="form-input" id="cfg-tel" placeholder="(11) 99999-9999"></div>
+            <div class="form-group"><label class="form-label">Instagram</label><input class="form-input" id="cfg-ig" placeholder="https://instagram.com/linedecor"></div>
+          </div>
+          <button class="btn btn-gold" onclick="salvarConfig()">Salvar Configurações</button>
+        </div>
+        <div class="prod-form" style="margin-top:24px">
+          <div class="prod-form-title">Google Sheets</div>
+          <p style="font-size:13px;color:var(--warm);margin-bottom:20px">Sincronize pedidos, produtos e newsletter com suas planilhas.</p>
+          <button class="btn btn-ghost" onclick="syncSheets()">📤 Sincronizar com Google Sheets</button>
+          <span id="sync-result" style="margin-left:12px;font-size:12px"></span>
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<script>
+const API = 'http://localhost:3000/api';
+const fmt = v => 'R$ ' + Number(v).toLocaleString('pt-BR', { minimumFractionDigits: 2 });
+
+let toastTimer;
+function toast(msg, tipo='ok') {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = tipo === 'erro' ? 'error show' : 'show';
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 3000);
+}
+
+// ── Tabs ──
+function switchTab(name, el) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.sb-link').forEach(l => l.classList.remove('active'));
+  document.getElementById('panel-' + name).classList.add('active');
+  el.classList.add('active');
+  const titles = { dashboard: 'Dashboard <span>Visão geral</span>', produtos: 'Produtos <span>Gerenciar catálogo</span>', pedidos: 'Pedidos <span>Gerenciar vendas</span>', mensagens: 'Mensagens <span>Contato e feedback</span>', config: 'Configurações <span>Empresa e integrações</span>' };
+  document.getElementById('topbar-title').innerHTML = titles[name] || name;
+  if (name === 'dashboard') loadDashboard();
+  if (name === 'produtos')  loadProdutos();
+  if (name === 'pedidos')   loadPedidos();
+  if (name === 'mensagens') loadMensagens();
+  if (name === 'config')    loadConfig();
+}
+
+// ══ DASHBOARD ══
+async function loadDashboard() {
+  try {
+    const res  = await fetch(`${API}/dashboard`);
+    const data = await res.json();
+    document.getElementById('dash-stats').innerHTML = `
+      <div class="stat-card gold"><div class="stat-card-label">Receita Total</div><div class="stat-card-val">${fmt(data.receitaTotal)}</div><div class="stat-card-sub">Todos os pedidos confirmados</div><div class="stat-card-icon">💰</div></div>
+      <div class="stat-card dark"><div class="stat-card-label">Pedidos</div><div class="stat-card-val">${data.totalPedidos}</div><div class="stat-card-sub">Total realizado</div><div class="stat-card-icon">📦</div></div>
+      <div class="stat-card green"><div class="stat-card-label">Produtos</div><div class="stat-card-val">${data.totalProdutos}</div><div class="stat-card-sub">No catálogo</div><div class="stat-card-icon">🏺</div></div>
+      <div class="stat-card rust"><div class="stat-card-label">Estoque Baixo</div><div class="stat-card-val">${data.estoqueBaixo}</div><div class="stat-card-sub">Produtos com menos de 5 unid.</div><div class="stat-card-icon">⚠️</div></div>`;
+
+    document.getElementById('dash-pedidos').innerHTML = data.pedidosRecentes.length === 0
+      ? '<tr><td colspan="4" style="text-align:center;padding:24px;color:var(--stone)">Nenhum pedido ainda</td></tr>'
+      : data.pedidosRecentes.map(p => `
+          <tr>
+            <td><strong>#${p.id}</strong></td>
+            <td>${p.nome}</td>
+            <td><strong>${fmt(p.total)}</strong></td>
+            <td><span class="status-badge s-${p.status}">${p.status}</span></td>
+          </tr>`).join('');
+
+    document.getElementById('dash-top').innerHTML = data.maisVendidos.map(p => `
+      <tr><td>${p.emoji} ${p.nome}</td><td><strong>${p.vendas}</strong> vendas</td></tr>`).join('');
+  } catch {
+    toast('⚠ Não foi possível conectar ao servidor.', 'erro');
+    document.getElementById('dash-stats').innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:40px;font-family:var(--ff-mono);font-size:11px;color:var(--rust)">Servidor offline. Rode: node server.js</div>';
+  }
+}
+
+// ══ PRODUTOS ══
+async function loadProdutos() {
+  try {
+    const res  = await fetch(`${API}/produtos`);
+    const prods = await res.json();
+    document.getElementById('prod-count').textContent = prods.length + ' produtos';
+    document.getElementById('prod-table-body').innerHTML = prods.map(p => `
+      <tr>
+        <td class="td-emoji">${p.emoji}</td>
+        <td><strong>${p.nome}</strong></td>
+        <td><span class="badge badge-stone">${p.categoria}</span></td>
+        <td><strong>${fmt(p.preco)}</strong>${p.preco_original ? `<br><small style="color:var(--stone);text-decoration:line-through">${fmt(p.preco_original)}</small>` : ''}</td>
+        <td><span style="color:${p.estoque < 5 ? 'var(--rust)' : 'var(--green)';font-weight:600}">${p.estoque}</span></td>
+        <td>${p.vendas}</td>
+        <td>${p.badge ? `<span class="badge ${p.badge === 'Novo' ? 'badge-dark' : 'badge-rust'}">${p.badge}</span>` : '—'}</td>
+        <td class="td-actions">
+          <button class="btn btn-ghost btn-sm" onclick="editarProduto(${p.id})">✏ Editar</button>
+          <button class="btn btn-danger btn-sm" onclick="deletarProduto(${p.id}, '${p.nome.replace(/'/g,"\\'")}')">🗑</button>
+        </td>
+      </tr>`).join('');
+  } catch { toast('Erro ao carregar produtos', 'erro'); }
+}
+
+async function salvarProduto() {
+  const id   = document.getElementById('edit-id').value;
+  const body = {
+    nome:          document.getElementById('p-nome').value.trim(),
+    categoria:     document.getElementById('p-categoria').value,
+    preco:         parseFloat(document.getElementById('p-preco').value),
+    preco_original:parseFloat(document.getElementById('p-preco-orig').value) || null,
+    estoque:       parseInt(document.getElementById('p-estoque').value) || 0,
+    emoji:         document.getElementById('p-emoji').value || '✨',
+    descricao:     document.getElementById('p-descricao').value.trim(),
+    badge:         document.getElementById('p-badge').value || null,
+  };
+  if (!body.nome || !body.preco) { toast('⚠ Nome e preço são obrigatórios!', 'erro'); return; }
+
+  const url    = id ? `${API}/produtos/${id}` : `${API}/produtos`;
+  const method = id ? 'PUT' : 'POST';
+  try {
+    const res  = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+    const data = await res.json();
+    toast(id ? '✓ Produto atualizado!' : `✓ Produto #${data.id} criado!`);
+    cancelEdit();
+    loadProdutos();
+  } catch { toast('Erro ao salvar produto', 'erro'); }
+}
+
+async function editarProduto(id) {
+  try {
+    const res  = await fetch(`${API}/produtos/${id}`);
+    const p    = await res.json();
+    document.getElementById('edit-id').value         = p.id;
+    document.getElementById('p-nome').value          = p.nome;
+    document.getElementById('p-categoria').value     = p.categoria;
+    document.getElementById('p-preco').value         = p.preco;
+    document.getElementById('p-preco-orig').value    = p.preco_original || '';
+    document.getElementById('p-estoque').value       = p.estoque;
+    document.getElementById('p-emoji').value         = p.emoji;
+    document.getElementById('p-descricao').value     = p.descricao || '';
+    document.getElementById('p-badge').value         = p.badge || '';
+    document.getElementById('form-title').textContent = `Editando: ${p.nome}`;
+    document.getElementById('btn-cancel-edit').style.display = '';
+    document.querySelector('.prod-form').scrollIntoView({ behavior: 'smooth' });
+  } catch { toast('Erro ao carregar produto', 'erro'); }
+}
+
+function cancelEdit() {
+  document.getElementById('edit-id').value = '';
+  ['p-nome','p-preco','p-preco-orig','p-descricao'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('p-estoque').value = '10';
+  document.getElementById('p-emoji').value   = '';
+  document.getElementById('p-badge').value   = '';
+  document.getElementById('form-title').textContent = 'Novo Produto';
+  document.getElementById('btn-cancel-edit').style.display = 'none';
+}
+
+async function deletarProduto(id, nome) {
+  if (!confirm(`Deletar "${nome}"? Esta ação não pode ser desfeita.`)) return;
+  try {
+    await fetch(`${API}/produtos/${id}`, { method: 'DELETE' });
+    toast(`✓ "${nome}" removido!`);
+    loadProdutos();
+  } catch { toast('Erro ao deletar produto', 'erro'); }
+}
+
+// ══ PEDIDOS ══
+async function loadPedidos() {
+  try {
+    const res  = await fetch(`${API}/pedidos`);
+    const peds = await res.json();
+    document.getElementById('ped-count').textContent = peds.length + ' pedidos';
+    document.getElementById('ped-table-body').innerHTML = peds.length === 0
+      ? '<tr><td colspan="9" style="text-align:center;padding:40px;color:var(--stone)">Nenhum pedido ainda</td></tr>'
+      : peds.map(p => `
+          <tr>
+            <td><strong>#${p.id}</strong><br><small style="color:var(--stone)">${p.codigo||''}</small></td>
+            <td>${p.nome}</td>
+            <td style="font-size:11px">${p.telefone || '—'}</td>
+            <td style="font-size:12px">${p.itens.map(i => `${i.emoji||'📦'} ${i.nome} ×${i.qty}`).join('<br>')}</td>
+            <td><strong>${fmt(p.total)}</strong></td>
+            <td>
+              <select class="form-select" style="padding:5px 8px;font-size:11px;width:auto" onchange="updateStatus(${p.id}, this.value)">
+                ${['pendente','enviado','entregue','cancelado'].map(s =>
+                  `<option value="${s}" ${p.status===s?'selected':''}>${s}</option>`).join('')}
+              </select>
+            </td>
+            <td style="font-size:11px">
+              <input type="text" class="form-input rast-cod" style="padding:4px 8px;font-size:10px;width:100px" placeholder="Código" value="${p.codigo_rastreio||''}" data-pid="${p.id}">
+              <input type="text" class="form-input rast-transp" style="padding:4px 8px;font-size:10px;width:70px;margin-top:4px" placeholder="Transp." value="${p.transportadora||''}" data-pid="${p.id}">
+              <button class="btn btn-ghost btn-sm" style="margin-top:4px;padding:4px 8px" onclick="saveRastreioFromRow(this)">✓</button>
+            </td>
+            <td style="font-family:var(--ff-mono);font-size:10px;color:var(--warm)">${new Date(p.criado_em).toLocaleDateString('pt-BR')}</td>
+            <td><span class="status-badge s-${p.status}">${p.status}</span></td>
+          </tr>`).join('');
+  } catch { toast('Erro ao carregar pedidos', 'erro'); }
+}
+
+async function updateStatus(id, status) {
+  try {
+    await fetch(`${API}/pedidos/${id}/status`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status }) });
+    toast(`✓ Pedido #${id} → ${status}`);
+    loadPedidos();
+    loadDashboard();
+  } catch { toast('Erro ao atualizar status', 'erro'); }
+}
+
+function saveRastreioFromRow(btn) {
+  const row = btn.closest('tr');
+  const cod = row.querySelector('.rast-cod')?.value || '';
+  const transp = row.querySelector('.rast-transp')?.value || '';
+  const id = row.querySelector('.rast-cod')?.dataset?.pid;
+  if (!id) return;
+  updateRastreio(parseInt(id), cod, transp);
+}
+async function updateRastreio(id, codigo, transp) {
+  try {
+    await fetch(`${API}/pedidos/${id}/rastreio`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ codigo_rastreio: codigo, transportadora: transp }) });
+    toast(`✓ Rastreio atualizado`);
+  } catch { toast('Erro ao atualizar rastreio', 'erro'); }
+}
+
+// ══ MENSAGENS ══
+async function loadMensagens(tipo) {
+  try {
+    const url = tipo ? `${API}/mensagens?tipo=${tipo}` : `${API}/mensagens`;
+    const res = await fetch(url);
+    const list = await res.json();
+    document.getElementById('msg-table-body').innerHTML = list.length === 0
+      ? '<tr><td colspan="6" style="text-align:center;padding:40px;color:var(--stone)">Nenhuma mensagem</td></tr>'
+      : list.map(m => `
+          <tr>
+            <td style="font-size:11px">${new Date(m.criado_em).toLocaleString('pt-BR')}</td>
+            <td>${m.nome}</td>
+            <td><a href="mailto:${m.email}">${m.email}</a></td>
+            <td><span class="badge badge-stone">${m.tipo || 'contato'}</span></td>
+            <td style="max-width:200px;font-size:12px">${(m.assunto || m.mensagem || '').substring(0, 80)}...</td>
+            <td>${m.lida ? '✓' : '—'}</td>
+          </tr>`).join('');
+  } catch { toast('Erro ao carregar mensagens', 'erro'); }
+}
+
+// ══ CONFIG ══
+async function loadConfig() {
+  try {
+    const res = await fetch(`${API}/config`);
+    const c = await res.json();
+    document.getElementById('cfg-email').value = c.email_empresa || '';
+    document.getElementById('cfg-tel').value = c.telefone_empresa || '';
+    document.getElementById('cfg-ig').value = c.instagram || '';
+  } catch { toast('Erro ao carregar config', 'erro'); }
+}
+
+async function salvarConfig() {
+  const email = document.getElementById('cfg-email').value.trim();
+  const tel = document.getElementById('cfg-tel').value.trim();
+  const ig = document.getElementById('cfg-ig').value.trim();
+  try {
+    if (email) await fetch(`${API}/config`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ chave: 'email_empresa', valor: email }) });
+    if (tel) await fetch(`${API}/config`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ chave: 'telefone_empresa', valor: tel }) });
+    if (ig) await fetch(`${API}/config`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ chave: 'instagram', valor: ig }) });
+    toast('✓ Configurações salvas!');
+  } catch { toast('Erro ao salvar', 'erro'); }
+}
+
+async function syncSheets() {
+  const el = document.getElementById('sync-result');
+  el.textContent = 'Sincronizando...';
+  try {
+    const res = await fetch(`${API}/sync/sheets`, { method: 'POST' });
+    const data = await res.json();
+    el.textContent = data.mensagem || (data.pedidos?.ok ? '✓ Sincronizado!' : 'Configure GOOGLE_SHEETS_ID no .env');
+  } catch (e) {
+    el.textContent = 'Erro: ' + e.message;
+  }
+}
+
+// ── Init ──
+loadDashboard();
+</script>
+</body>
+</html>

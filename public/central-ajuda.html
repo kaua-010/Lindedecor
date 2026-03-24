@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Central de Ajuda — LineDecor</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .page-hero { background: var(--dark); color: var(--cream); padding: 100px 80px 60px; text-align: center; }
+    .page-hero h1 { font-family: var(--ff-head); font-size: clamp(2rem, 3.5vw, 3rem); font-weight: 300; }
+    .help-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; max-width: 1000px; margin: 0 auto; padding: 60px 40px; }
+    .help-card { background: var(--white); border: 1px solid var(--sand); padding: 28px; transition: all .25s; }
+    .help-card:hover { border-color: var(--gold); box-shadow: var(--shadow); }
+    .help-card h3 { font-family: var(--ff-head); font-size: 1.2rem; margin-bottom: 12px; color: var(--dark); }
+    .help-card p { font-size: 13px; color: var(--warm); line-height: 1.7; margin-bottom: 16px; }
+    .help-card a { font-family: var(--ff-mono); font-size: 10px; letter-spacing: 1.5px; color: var(--gold); }
+    .track-box { background: var(--cream); padding: 40px; text-align: center; margin-bottom: 40px; }
+    .track-box input { max-width: 320px; margin: 0 auto 16px; display: block; padding: 14px 20px; width: 100%; border: 1px solid var(--sand); }
+  </style>
+</head>
+<body>
+  <div id="toast"></div>
+  <nav id="navbar" class="scrolled">
+    <a class="nav-logo" href="index.html">Line<span>Decor</span></a>
+    <div class="nav-links">
+      <a href="index.html">Loja</a>
+      <a href="contato.html">Contato</a>
+    </div>
+    <a href="index.html" class="btn btn-dark btn-sm">Ir à Loja</a>
+  </nav>
+
+  <section class="page-hero">
+    <h1>Central de <em>Ajuda</em></h1>
+    <p>Encontre respostas rápidas para suas dúvidas</p>
+  </section>
+
+  <div class="track-box">
+    <h3 style="margin-bottom:16px;font-family:var(--ff-head)">Rastrear Pedido</h3>
+    <input type="text" id="track-code" placeholder="Código do pedido (ex: LD123ABC)">
+    <a href="#" id="track-btn" class="btn btn-gold">Rastrear</a>
+  </div>
+
+  <div class="help-grid">
+    <div class="help-card">
+      <h3>📦 Entregas</h3>
+      <p>Frete grátis acima de R$ 299. Prazo de 5 a 15 dias úteis para todo o Brasil.</p>
+      <a href="contato.html">Saiba mais →</a>
+    </div>
+    <div class="help-card">
+      <h3>↩️ Trocas e Devoluções</h3>
+      <p>7 dias para solicitar. Produto na embalagem original. Reembolso em até 7 dias úteis.</p>
+      <a href="trocas-devolucoes.html">Ver política →</a>
+    </div>
+    <div class="help-card">
+      <h3>💳 Pagamento</h3>
+      <p>Pix, cartão em até 12x, boleto. Parcelamento sem juros nas compras acima de R$ 150.</p>
+      <a href="index.html#produtos">Comprar →</a>
+    </div>
+    <div class="help-card">
+      <h3>📧 Contato</h3>
+      <p>E-mail e WhatsApp disponíveis. Horário: Seg-Sex 9h-18h, Sáb 9h-13h.</p>
+      <a href="contato.html">Falar com a gente →</a>
+    </div>
+  </div>
+
+  <div style="max-width:600px;margin:0 auto;padding:0 40px 60px">
+    <h3 style="font-family:var(--ff-head);margin-bottom:20px">Sugestão de Melhoria</h3>
+    <form id="form-feedback" onsubmit="enviarFeedback(event)">
+      <div class="form-group">
+        <label class="form-label">Sua opinião</label>
+        <textarea class="form-textarea" name="mensagem" required placeholder="Como podemos melhorar?"></textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Seu nome</label>
+        <input class="form-input" name="nome" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label">E-mail</label>
+        <input class="form-input" name="email" type="email" required>
+      </div>
+      <button type="submit" class="btn btn-gold">Enviar Sugestão</button>
+    </form>
+  </div>
+
+  <footer>
+    <div class="footer-bottom" style="padding: 40px 24px;"><p class="footer-copy">© 2025 LineDecor</p></div>
+  </footer>
+  <script>
+    const API = 'http://localhost:3000/api';
+    function toast(m,t){const e=document.getElementById('toast');e.textContent=m;e.className=t?'error show':'show';setTimeout(()=>e.classList.remove('show'),3000);}
+    document.getElementById('track-btn').onclick = () => {
+      const c = document.getElementById('track-code').value.trim();
+      if (!c) { toast('Digite o código do pedido', 1); return; }
+      window.location = 'rastrear.html?codigo=' + encodeURIComponent(c);
+    };
+    async function enviarFeedback(ev) {
+      ev.preventDefault();
+      const f = ev.target, fd = new FormData(f);
+      try {
+        const r = await fetch(API + '/mensagens', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ nome: fd.get('nome'), email: fd.get('email'), mensagem: fd.get('mensagem'), tipo: 'feedback' }) });
+        const d = await r.json();
+        if (r.ok) { toast('✓ Obrigado pela sua opinião!'); f.reset(); } else throw new Error(d.erro);
+      } catch (e) { toast('Erro: ' + e.message, 1); }
+    }
+  </script>
+</body>
+</html>

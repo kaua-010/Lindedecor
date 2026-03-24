@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rastrear Pedido — LineDecor</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .page-hero { background: var(--dark); color: var(--cream); padding: 100px 80px 60px; text-align: center; }
+    .page-hero h1 { font-family: var(--ff-head); font-size: clamp(2rem, 3.5vw, 3rem); font-weight: 300; }
+    .track-form { max-width: 480px; margin: 40px auto; padding: 0 24px; display: flex; gap: 12px; }
+    .track-form input { flex: 1; padding: 14px 20px; border: 1px solid var(--sand); font-size: 14px; }
+    .track-result { max-width: 640px; margin: 0 auto 60px; padding: 0 24px; }
+    .pedido-card { background: var(--white); border: 1px solid var(--sand); padding: 32px; margin-top: 24px; }
+    .pedido-card h2 { font-family: var(--ff-head); margin-bottom: 20px; }
+    .status-timeline { display: flex; gap: 16px; flex-wrap: wrap; margin: 24px 0; }
+    .status-step { flex: 1; min-width: 120px; padding: 16px; background: var(--cream); border-left: 3px solid var(--stone); }
+    .status-step.ativo { border-color: var(--gold); background: rgba(201,168,76,.1); }
+    .status-step.concluido { border-color: var(--green); }
+    .track-error { text-align: center; padding: 60px 24px; color: var(--warm); }
+  </style>
+</head>
+<body>
+  <nav id="navbar" class="scrolled">
+    <a class="nav-logo" href="index.html">Line<span>Decor</span></a>
+    <div class="nav-links"><a href="index.html">Loja</a><a href="central-ajuda.html">Ajuda</a></div>
+    <a href="index.html" class="btn btn-dark btn-sm">Ir à Loja</a>
+  </nav>
+
+  <section class="page-hero">
+    <h1>Rastrear <em>Pedido</em></h1>
+    <p>Informe o código do seu pedido para acompanhar o status</p>
+  </section>
+
+  <div class="track-form">
+    <input type="text" id="codigo" placeholder="Ex: LD123ABC ou número do pedido" value="">
+    <button class="btn btn-gold" onclick="buscarPedido()">Buscar</button>
+  </div>
+
+  <div class="track-result" id="result">
+    <div class="track-error" id="msg-inicial">Digite o código e clique em Buscar</div>
+    <div id="pedido-card" class="hidden"></div>
+    <div id="pedido-erro" class="hidden track-error"></div>
+  </div>
+
+  <footer>
+    <div class="footer-bottom" style="padding: 40px 24px;"><p class="footer-copy">© 2025 LineDecor</p></div>
+  </footer>
+  <script>
+    const API = 'http://localhost:3000/api';
+    const fmt = v => 'R$ ' + Number(v).toLocaleString('pt-BR', { minimumFractionDigits: 2 });
+    const statusSteps = ['pendente','enviado','entregue'];
+    const statusLabels = { pendente: 'Pedido recebido', enviado: 'Enviado', entregue: 'Entregue' };
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const cod = urlParams.get('codigo');
+    if (cod) document.getElementById('codigo').value = cod;
+
+    async function buscarPedido() {
+      const c = document.getElementById('codigo').value.trim();
+      if (!c) return;
+      document.getElementById('msg-inicial').classList.add('hidden');
+      document.getElementById('pedido-card').classList.add('hidden');
+      document.getElementById('pedido-erro').classList.add('hidden');
+      try {
+        const r = await fetch(API + '/pedidos/rastrear/' + encodeURIComponent(c));
+        const p = await r.json();
+        if (!r.ok) throw new Error(p.erro || 'Pedido não encontrado');
+        renderPedido(p);
+      } catch (e) {
+        document.getElementById('pedido-erro').textContent = e.message;
+        document.getElementById('pedido-erro').classList.remove('hidden');
+      }
+    }
+
+    function renderPedido(p) {
+      const idx = statusSteps.indexOf(p.status);
+      const stepsHtml = statusSteps.map((s, i) => {
+        let cls = '';
+        if (i < idx) cls = 'concluido';
+        else if (i === idx) cls = 'ativo';
+        return `<div class="status-step ${cls}">${statusLabels[s]}</div>`;
+      }).join('');
+      const itens = (typeof p.itens === 'string' ? JSON.parse(p.itens) : p.itens);
+      document.getElementById('pedido-card').innerHTML = `
+        <div class="pedido-card">
+          <h2>Pedido #${p.id} · ${p.codigo || ''}</h2>
+          <p><strong>Cliente:</strong> ${p.nome}</p>
+          <p><strong>Total:</strong> ${fmt(p.total)}</p>
+          <p><strong>Data:</strong> ${new Date(p.criado_em).toLocaleDateString('pt-BR')}</p>
+          <div class="status-timeline">${stepsHtml}</div>
+          ${p.codigo_rastreio ? `<p><strong>Rastreio:</strong> ${p.codigo_rastreio} ${p.transportadora ? '('+p.transportadora+')' : ''}</p>` : ''}
+          <div style="margin-top:20px;padding-top:20px;border-top:1px solid var(--sand)">
+            <strong>Itens:</strong>
+            ${itens.map(i => `<div>${i.emoji||'📦'} ${i.nome} × ${i.qty}</div>`).join('')}
+          </div>
+        </div>`;
+      document.getElementById('pedido-card').classList.remove('hidden');
+    }
+
+    if (cod) buscarPedido();
+  </script>
+</body>
+</html>

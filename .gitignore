@@ -1,0 +1,5 @@
+node_modules/
+.env
+linedecor.db
+*.db
+.DS_Store

@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Produto — LineDecor</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .prod-page { max-width: 900px; margin: 0 auto; padding: 120px 24px 60px; display: grid; grid-template-columns: 1fr 1fr; gap: 48px; }
+    .prod-page-img { aspect-ratio: 1; background: var(--cream); display: flex; align-items: center; justify-content: center; font-size: 8rem; }
+    .prod-page-info h1 { font-family: var(--ff-head); font-size: 2rem; margin-bottom: 12px; }
+    .prod-page-info .preco { font-size: 1.5rem; font-weight: 700; color: var(--gold); margin: 16px 0; }
+    .prod-page-info .desc { color: var(--warm); line-height: 1.8; margin-bottom: 24px; }
+    .comentarios { margin-top: 60px; padding-top: 40px; border-top: 1px solid var(--sand); }
+    .comentario-card { background: var(--cream); padding: 20px; margin-bottom: 16px; border-left: 3px solid var(--gold); }
+    .comentario-form { background: var(--cream); padding: 24px; margin-top: 24px; }
+    @media (max-width:768px) { .prod-page { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <nav id="navbar" class="scrolled">
+    <a class="nav-logo" href="index.html">Line<span>Decor</span></a>
+    <div class="nav-links">
+      <a href="index.html#produtos">Produtos</a>
+      <a href="contato.html">Contato</a>
+    </div>
+    <a href="index.html" class="btn btn-dark btn-sm">Ir à Loja</a>
+  </nav>
+
+  <div class="prod-page" id="prod-container">
+    <div class="prod-page-img" id="prod-img">✨</div>
+    <div class="prod-page-info">
+      <div class="prod-cat" id="prod-cat"></div>
+      <h1 id="prod-nome">Carregando...</h1>
+      <div class="preco" id="prod-preco"></div>
+      <p class="desc" id="prod-desc"></p>
+      <button class="btn btn-gold" id="btn-add-cart">Adicionar ao Carrinho</button>
+    </div>
+  </div>
+
+  <div style="max-width:900px;margin:0 auto;padding:0 24px 60px">
+    <div class="comentarios">
+      <h2 style="font-family:var(--ff-head);margin-bottom:20px">Comentários e Avaliações</h2>
+      <div id="comentarios-list"></div>
+      <div class="comentario-form">
+        <h3 style="font-size:1rem;margin-bottom:16px">Deixe sua opinião</h3>
+        <form id="form-comentario" onsubmit="enviarComentario(event)">
+          <div class="form-group">
+            <label class="form-label">Sua nota (1-5)</label>
+            <select class="form-select" name="nota" style="max-width:80px">
+              <option value="5">★★★★★</option>
+              <option value="4">★★★★☆</option>
+              <option value="3">★★★☆☆</option>
+              <option value="2">★★☆☆☆</option>
+              <option value="1">★☆☆☆☆</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Comentário</label>
+            <textarea class="form-textarea" name="texto" placeholder="O que você achou do produto?"></textarea>
+          </div>
+          <div class="form-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+            <div class="form-group"><label class="form-label">Nome</label><input class="form-input" name="nome" required></div>
+            <div class="form-group"><label class="form-label">E-mail</label><input class="form-input" name="email" type="email" required></div>
+          </div>
+          <button type="submit" class="btn btn-gold">Enviar Avaliação</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <footer><div class="footer-bottom" style="padding:40px"><p class="footer-copy">© 2025 LineDecor</p></div></footer>
+
+  <div id="toast"></div>
+  <script>
+    const API = 'http://localhost:3000/api';
+    const fmt = v => 'R$ ' + Number(v).toLocaleString('pt-BR', { minimumFractionDigits: 2 });
+    const id = new URLSearchParams(location.search).get('id');
+    let produto;
+
+    function toast(m,t){const e=document.getElementById('toast');e.textContent=m;e.className=t?'error show':'show';setTimeout(()=>e.classList.remove('show'),3000);}
+
+    async function load() {
+      if (!id) { document.getElementById('prod-nome').textContent = 'Produto não encontrado'; return; }
+      try {
+        const r = await fetch(API + '/produtos/' + id);
+        produto = await r.json();
+        if (!r.ok) throw new Error(produto.erro);
+        document.getElementById('prod-img').innerHTML = produto.imagem ? `<img src="${produto.imagem}" alt="" style="width:100%;height:100%;object-fit:cover">` : produto.emoji || '✨';
+        document.getElementById('prod-cat').textContent = produto.categoria;
+        document.getElementById('prod-nome').textContent = produto.nome;
+        document.getElementById('prod-preco').innerHTML = (produto.preco_original ? `<span style="text-decoration:line-through;color:var(--stone);margin-right:8px">${fmt(produto.preco_original)}</span>` : '') + fmt(produto.preco);
+        document.getElementById('prod-desc').textContent = produto.descricao || 'Sem descrição.';
+        document.title = produto.nome + ' — LineDecor';
+        document.getElementById('btn-add-cart').onclick = () => {
+          if (typeof addToCart === 'function') addToCart(produto.id);
+          else window.location = 'index.html?add=' + produto.id + '#produtos';
+        };
+        loadComentarios();
+      } catch (e) {
+        document.getElementById('prod-nome').textContent = 'Erro ao carregar';
+      }
+    }
+
+    async function loadComentarios() {
+      try {
+        const r = await fetch(API + '/produtos/' + id + '/comentarios');
+        const list = await r.json();
+        document.getElementById('comentarios-list').innerHTML = list.length === 0
+          ? '<p style="color:var(--stone)">Seja o primeiro a comentar!</p>'
+          : list.map(c => `<div class="comentario-card"><div style="color:var(--gold);margin-bottom:8px">${'★'.repeat(c.nota)}${'☆'.repeat(5-c.nota)}</div><p>${c.texto || ''}</p><small style="color:var(--warm)">${c.nome} · ${new Date(c.criado_em).toLocaleDateString('pt-BR')}</small></div>`).join('');
+      } catch {}
+    }
+
+    async function enviarComentario(ev) {
+      ev.preventDefault();
+      const f = ev.target, fd = new FormData(f);
+      try {
+        const r = await fetch(API + '/comentarios', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ produto_id: parseInt(id), nome: fd.get('nome'), email: fd.get('email'), nota: parseInt(fd.get('nota')), texto: fd.get('texto') }) });
+        const d = await r.json();
+        if (r.ok) { toast('✓ Avaliação enviada! Será publicada após aprovação.'); f.reset(); } else throw new Error(d.erro);
+      } catch (e) { toast('Erro: ' + e.message, 1); }
+    }
+
+    load();
+  </script>
+</body>
+</html>
