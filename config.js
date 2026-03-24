@@ -24,7 +24,7 @@ module.exports = {
   
   // Google Sheets - ID da planilha para sincronizar
   GOOGLE_SHEETS_ID: process.env.GOOGLE_SHEETS_ID || '',
-  GOOGLE_CREDENTIALS: process.env.GOOGLE_CREDENTIALS ? JSON.parse(process.env.GOOGLE_CREDENTIALS) : null,
+  GOOGLE_CREDENTIALS: (() => { try { return process.env.GOOGLE_CREDENTIALS ? JSON.parse(process.env.GOOGLE_CREDENTIALS) : null; } catch { return null; } })(),
   
   // Frete grátis acima de (R$)
   FRETE_GRATIS_MINIMO: parseFloat(process.env.FRETE_GRATIS_MINIMO || '299'),
