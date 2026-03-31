@@ -5,6 +5,16 @@
 
 const API = 'http://localhost:3000/api';
 
+// Produtos de demonstração (quando servidor não está rodando)
+const PRODUTOS_DEMO = [
+  {id:1,nome:'Vaso Cerâmica Atena',descricao:'Vaso artesanal em cerâmica esmaltada.',preco:289,preco_original:null,categoria:'Vasos',emoji:'🏺',estoque:15,vendas:42,badge:'Novo'},
+  {id:2,nome:'Kit Velas Âmbar Selvagem',descricao:'Kit com 3 velas de cera de soja.',preco:149,preco_original:210,categoria:'Velas',emoji:'🕯️',estoque:30,vendas:87,badge:'Oferta'},
+  {id:3,nome:'Quadro Abstrato Ouro',descricao:'Impressão de arte abstrata com moldura dourada.',preco:420,preco_original:null,categoria:'Quadros',emoji:'🖼️',estoque:8,vendas:31,colecao:'Premium'},
+  {id:4,nome:'Planta Kokedama Zen',descricao:'Planta em bola de musgo, estilo japonês.',preco:195,preco_original:null,categoria:'Plantas',emoji:'🪴',estoque:20,vendas:55,badge:'Novo'},
+  {id:5,nome:'Vaso Mármore Nero',descricao:'Vaso premium em mármore preto polido.',preco:560,preco_original:null,categoria:'Premium',emoji:'🏺',estoque:5,vendas:18},
+  {id:6,nome:'Luminária Arco Dourado',descricao:'Luminária de arco em metal dourado.',preco:380,preco_original:480,categoria:'Iluminação',emoji:'💡',estoque:12,vendas:29,badge:'Oferta'},
+];
+
 // ── Estado global ──────────────────────
 const state = {
   produtos: [],
@@ -161,8 +171,17 @@ async function loadProdutos() {
     state.produtos = await res.json();
     renderProdutos();
   } catch {
-    document.getElementById('produtos-grid').innerHTML =
-      '<p style="text-align:center;color:var(--warm);padding:60px;font-family:var(--ff-mono);font-size:11px;letter-spacing:2px">Erro ao carregar produtos. Verifique se o servidor está rodando.</p>';
+    // Modo offline: usa produtos de demonstração
+    let prods = [...PRODUTOS_DEMO];
+    if (state.filtro !== 'todos') prods = prods.filter(p => p.categoria === state.filtro);
+    if (state.colecao === 'Premium') prods = prods.filter(p => p.categoria === 'Premium' || p.colecao === 'Premium');
+    if (state.busca) prods = prods.filter(p => (p.nome + ' ' + (p.descricao || '')).toLowerCase().includes(state.busca.toLowerCase()));
+    if (state.ordenar === 'preco_asc') prods.sort((a,b) => a.preco - b.preco);
+    else if (state.ordenar === 'preco_desc') prods.sort((a,b) => b.preco - a.preco);
+    else if (state.ordenar === 'novidades') prods.reverse();
+    else prods.sort((a,b) => (b.vendas || 0) - (a.vendas || 0));
+    state.produtos = prods;
+    renderProdutos();
   }
 }
 
@@ -269,7 +288,12 @@ async function loadCategorias() {
       `<button class="filter-tab" data-cat="${c.categoria}" onclick="setFiltro('${c.categoria}', this)">${c.categoria} <span style="opacity:.5">(${c.total})</span></button>`
     ).join('');
     tabsEl.insertAdjacentHTML('beforeend', extras);
-  } catch {}
+  } catch {
+    ['Vasos','Velas','Quadros','Plantas','Iluminação','Premium'].forEach(cat => {
+      const n = PRODUTOS_DEMO.filter(p => p.categoria === cat).length;
+      if (n > 0) tabsEl.insertAdjacentHTML('beforeend', `<button class="filter-tab" data-cat="${cat}" onclick="setFiltro('${cat}', this)">${cat} <span style="opacity:.5">(${n})</span></button>`);
+    });
+  }
 }
 
 // ══ CHECKOUT ═══════════════════════════
@@ -321,8 +345,15 @@ async function aplicarCupom() {
     renderCheckoutSummary();
     toast('Cupom aplicado!');
   } catch (e) {
-    toast(e.message, 'erro');
-    document.getElementById('cupom-msg').textContent = '';
+    // Modo offline: cupons demo
+    let desconto = 0;
+    if (codigo === 'BEMVINDO10' && subtotal >= 100) { desconto = subtotal * 0.1; state.cupomAplicado = 'BEMVINDO10'; }
+    else if (codigo === 'FRETE299' && subtotal >= 299) { desconto = 25; state.cupomAplicado = 'FRETE299'; }
+    else { toast('Cupom inválido', 'erro'); return; }
+    state.desconto = desconto;
+    document.getElementById('cupom-msg').textContent = `✓ Cupom aplicado!`;
+    renderCheckoutSummary();
+    toast('Cupom aplicado!');
   }
 }
 
@@ -371,7 +402,24 @@ async function finalizarPedido() {
     document.getElementById('ch-endereco').value = '';
     document.getElementById('ch-cupom').value = '';
   } catch (err) {
-    toast(`⚠ Erro: ${err.message}`, 'erro');
+    // Modo offline: salva pedido localmente e simula sucesso
+    const pedidos = JSON.parse(localStorage.getItem('linedecor_pedidos_offline') || '[]');
+    const id = pedidos.length + 1;
+    body.id = id;
+    body.codigo = 'LD' + Date.now().toString(36).toUpperCase();
+    pedidos.push(body);
+    localStorage.setItem('linedecor_pedidos_offline', JSON.stringify(pedidos));
+    toast(`✓ Pedido #${id} registrado! (modo demonstração - instale Node.js para envio real)`);
+    state.cart = [];
+    saveCart();
+    updateCartUI();
+    closeCheckout();
+    document.getElementById('ch-nome').value = '';
+    document.getElementById('ch-email').value = '';
+    document.getElementById('ch-telefone').value = '';
+    document.getElementById('ch-cep').value = '';
+    document.getElementById('ch-endereco').value = '';
+    document.getElementById('ch-cupom').value = '';
   }
 }
 
@@ -387,7 +435,9 @@ async function subscribeNewsletter() {
     toast('✓ Cadastrado! Seu cupom chegará em breve 🎉');
     input.value = '';
   } catch (err) {
-    toast(`⚠ ${err.message}`, 'erro');
+    localStorage.setItem('linedecor_newsletter_offline', JSON.stringify([...(JSON.parse(localStorage.getItem('linedecor_newsletter_offline') || '[]')), email]));
+    toast('✓ Cadastrado! (modo demonstração)');
+    input.value = '';
   }
 }
 

@@ -42,7 +42,8 @@ export default function CheckoutPage() {
     if (cart.length === 0) return;
     setLoading(true);
     try {
-      await fetchApi('/pedidos', {
+      // 1. Criar o pedido primeiro
+      const pedidoData = await fetchApi<{ id: string; codigo: string }>('/pedidos', {
         method: 'POST',
         body: JSON.stringify({
           nome,
@@ -57,10 +58,26 @@ export default function CheckoutPage() {
           total: totalFinal,
         }),
       });
+
+      // 2. Criar checkout no Stripe com os itens
+      const checkoutData = await fetchApi<{ sessionId: string; url: string }>('/payment/checkout', {
+        method: 'POST',
+        body: JSON.stringify({
+          pedidoId: pedidoData.id,
+          itens: cart.map((i) => ({
+            nome: i.nome,
+            preco: i.preco,
+            qty: i.qty,
+            descricao: i.nome,
+          })),
+        }),
+      });
+
+      // 3. Limpar carrinho e redirecionar para Stripe
       localStorage.removeItem('linedecor_cart');
-      router.push('/pedido-confirmado');
+      window.location.href = checkoutData.url;
     } catch (e: any) {
-      alert(e.message || 'Erro ao finalizar');
+      alert(e.message || 'Erro ao finalizar compra');
     } finally {
       setLoading(false);
     }

@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module } from '@nestjs/core';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
@@ -11,6 +11,7 @@ import { ChatModule } from './chat/chat.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { SheetsModule } from './sheets/sheets.module';
 import { NewsletterModule } from './newsletter/newsletter.module';
+import { PaymentModule } from './payment/payment.module';
 
 @Module({
   imports: [
@@ -35,6 +36,7 @@ import { NewsletterModule } from './newsletter/newsletter.module';
     NotificationsModule,
     SheetsModule,
     NewsletterModule,
+    PaymentModule,
   ],
 })
 export class AppModule {}

@@ -2,8 +2,18 @@
   LINEDECOR - COMO FAZER FUNCIONAR
 ========================================
 
-O Node.js NAO ESTA INSTALADO no seu PC.
-Sem ele, o sistema nao roda.
+OPCAO RAPIDA (funciona AGORA, sem instalar nada):
+------------------------------------------------
+Dê duplo clique em: ABRIR-SITE.bat
+
+A loja abre no navegador em modo demonstração.
+Voce pode ver produtos, carrinho e fazer checkout.
+(Os pedidos ficam salvos localmente - nao vao pro servidor)
+
+
+PARA O SISTEMA COMPLETO (com banco, emails, admin):
+--------------------------------------------------
+O Node.js precisa estar instalado.
 
 PASSO 1 - INSTALAR NODE.JS
 --------------------------

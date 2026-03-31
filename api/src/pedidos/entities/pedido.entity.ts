@@ -57,7 +57,11 @@ export class Pedido {
 
   @Column({ nullable: true })
   notas: string;
+  @Column({ nullable: true })
+  stripeSessionId: string;
 
+  @Column({ nullable: true })
+  stripePaymentId: string;
   @CreateDateColumn()
   criadoEm: Date;
 }
